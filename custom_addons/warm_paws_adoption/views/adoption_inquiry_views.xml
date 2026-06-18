@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="warm_paws_adoption_inquiry_action" model="ir.actions.act_window">
+        <field name="name">認養申請</field>
+        <field name="res_model">warm.paws.adoption.inquiry</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="warm_paws_adoption_inquiry_view_list" model="ir.ui.view">
+        <field name="name">warm.paws.adoption.inquiry.list</field>
+        <field name="model">warm.paws.adoption.inquiry</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="create_date"/>
+                <field name="animal_product_id"/>
+                <field name="name"/>
+                <field name="phone"/>
+                <field name="email"/>
+                <field name="city"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="warm_paws_adoption_inquiry_view_form" model="ir.ui.view">
+        <field name="name">warm.paws.adoption.inquiry.form</field>
+        <field name="model">warm.paws.adoption.inquiry</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="state"/>
+                        <field name="animal_product_id"/>
+                        <field name="name"/>
+                        <field name="phone"/>
+                        <field name="email"/>
+                        <field name="city"/>
+                    </group>
+                    <notebook>
+                        <page string="申請內容">
+                            <field name="experience"/>
+                            <field name="family_members"/>
+                            <field name="other_pets"/>
+                            <field name="message"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+</odoo>

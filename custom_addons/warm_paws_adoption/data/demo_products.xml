@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="product_animal_mochi" model="product.template">
+        <field name="name">麻糬</field>
+        <field name="type">service</field>
+        <field name="list_price">0</field>
+        <field name="sale_ok">True</field>
+        <field name="purchase_ok">False</field>
+        <field name="is_adoptable_animal">True</field>
+        <field name="animal_type">dog</field>
+        <field name="animal_breed">貴賓犬</field>
+        <field name="animal_age">1歲</field>
+        <field name="animal_age_value">1</field>
+        <field name="animal_gender">男生</field>
+        <field name="animal_status">available</field>
+        <field name="animal_neutered">yes</field>
+        <field name="animal_chip_status">implanted</field>
+        <field name="animal_weight">5.2</field>
+        <field name="animal_location">台中市</field>
+        <field name="animal_personality">活潑親人，喜歡撒嬌與散步。</field>
+        <field name="animal_health_status">良好，已施打疫苗</field>
+        <field name="animal_vaccine_info">核心疫苗已完成，下一次補強依獸醫建議安排。</field>
+        <field name="animal_deworming_status">已完成</field>
+        <field name="animal_chip_implant_status">已完成</field>
+        <field name="animal_health_record_status">良好</field>
+        <field name="animal_rescue_story">牠被志工在雨天帶回中心，剛開始很緊張，現在已經會主動靠近人撒嬌。</field>
+        <field name="animal_about">牠喜歡和人互動，也很喜歡玩玩具，尤其是球球！
+散步的時候會乖乖跟著，不會亂衝，是個貼心又可愛的好夥伴。</field>
+        <field name="animal_traits">活潑好動,親人撒嬌,喜歡玩耍,聰明好學,不挑食</field>
+        <field name="animal_rating_human">5</field>
+        <field name="animal_rating_active">5</field>
+        <field name="animal_rating_train">4</field>
+        <field name="animal_rating_cat">3</field>
+        <field name="animal_rating_dog">4</field>
+        <field name="animal_suitable_home">適合有耐心、願意陪伴的家人
+適合有養狗經驗的家庭
+可與其他狗狗相處
+不建議與貓咪同住（需慢慢適應）
+適合住公寓或有庭院的家庭</field>
+    </record>
+
+    <record id="product_animal_pudding" model="product.template">
+        <field name="name">布丁</field>
+        <field name="type">service</field>
+        <field name="list_price">0</field>
+        <field name="sale_ok">True</field>
+        <field name="purchase_ok">False</field>
+        <field name="is_adoptable_animal">True</field>
+        <field name="animal_type">dog</field>
+        <field name="animal_breed">柴犬</field>
+        <field name="animal_age">2歲</field>
+        <field name="animal_age_value">2</field>
+        <field name="animal_gender">女生</field>
+        <field name="animal_status">available</field>
+        <field name="animal_neutered">yes</field>
+        <field name="animal_chip_status">implanted</field>
+        <field name="animal_weight">7.4</field>
+        <field name="animal_location">台中市</field>
+        <field name="animal_personality">聰明勇敢，對熟人非常忠心。</field>
+        <field name="animal_health_status">良好，已完成結紮</field>
+        <field name="animal_vaccine_info">已完成基礎疫苗，入住前會再次確認健康紀錄。</field>
+        <field name="animal_deworming_status">已完成</field>
+        <field name="animal_chip_implant_status">已完成</field>
+        <field name="animal_health_record_status">良好</field>
+        <field name="animal_rescue_story">牠曾在街頭流浪一段時間，經過照護後恢復健康，正在等待一個穩定的家。</field>
+        <field name="animal_traits">聰明好學,親人撒嬌,喜歡散步,適應力佳</field>
+        <field name="animal_suitable_home">適合願意每天散步的家庭
+適合有穩定作息的家庭
+適合願意陪牠慢慢適應的人</field>
+    </record>
+
+    <record id="product_animal_orange" model="product.template">
+        <field name="name">小橘</field>
+        <field name="type">service</field>
+        <field name="list_price">0</field>
+        <field name="sale_ok">True</field>
+        <field name="purchase_ok">False</field>
+        <field name="is_adoptable_animal">True</field>
+        <field name="animal_type">cat</field>
+        <field name="animal_breed">米克斯貓</field>
+        <field name="animal_age">8個月</field>
+        <field name="animal_age_value">0.66</field>
+        <field name="animal_gender">男生</field>
+        <field name="animal_status">available</field>
+        <field name="animal_neutered">no</field>
+        <field name="animal_chip_status">implanted</field>
+        <field name="animal_weight">3.1</field>
+        <field name="animal_location">台中市</field>
+        <field name="animal_personality">親人愛玩，好奇心強。</field>
+        <field name="animal_health_status">良好，已施打疫苗</field>
+        <field name="animal_vaccine_info">核心疫苗已完成。</field>
+        <field name="animal_deworming_status">已完成</field>
+        <field name="animal_chip_implant_status">已完成</field>
+        <field name="animal_health_record_status">良好</field>
+        <field name="animal_rescue_story">牠原本因家庭變故來到中心，個性溫柔，很適合願意慢慢陪伴的新家人。</field>
+        <field name="animal_traits">親人愛玩,好奇心強,喜歡陪伴,不挑食</field>
+        <field name="animal_suitable_home">適合有耐心陪伴的家庭
+適合室內生活
+適合願意準備貓跳台與躲藏空間的家庭</field>
+    </record>
+</odoo>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="warm_paws_root_menu" name="暖心毛孩" sequence="10"/>
+    <menuitem id="warm_paws_animals_menu" name="上架毛孩產品" parent="warm_paws_root_menu" action="warm_paws_product_animal_action" sequence="10"/>
+    <menuitem id="warm_paws_inquiries_menu" name="認養申請" parent="warm_paws_root_menu" action="warm_paws_adoption_inquiry_action" sequence="20"/>
+    <menuitem id="warm_paws_volunteers_menu" name="志工申請" parent="warm_paws_root_menu" action="warm_paws_volunteer_application_action" sequence="30"/>
+    <menuitem id="warm_paws_contacts_menu" name="聯絡訊息" parent="warm_paws_root_menu" action="warm_paws_contact_message_action" sequence="40"/>
+    <menuitem id="warm_paws_members_menu" name="會員與收藏" parent="warm_paws_root_menu" action="warm_paws_member_action" sequence="50"/>
+</odoo>

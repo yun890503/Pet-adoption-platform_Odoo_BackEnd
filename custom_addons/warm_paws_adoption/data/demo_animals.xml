@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="animal_mochi" model="warm.paws.animal">
+        <field name="name">麻糬</field>
+        <field name="type">dog</field>
+        <field name="breed">貴賓犬</field>
+        <field name="age">1歲</field>
+        <field name="age_value">1</field>
+        <field name="gender">男生</field>
+        <field name="personality">活潑親人，喜歡撒嬌與散步。</field>
+        <field name="health_status">良好，已施打疫苗</field>
+        <field name="vaccine_info">核心疫苗已完成，下一次補強依獸醫建議安排。</field>
+        <field name="neutered">yes</field>
+        <field name="rescue_story">牠被志工在雨天帶回中心，剛開始很緊張，現在已經會主動靠近人撒嬌。</field>
+        <field name="weight">5.2</field>
+        <field name="images_json">["https://images.unsplash.com/photo-1601979031925-424e53b6caaa?auto=format&amp;fit=crop&amp;w=900&amp;q=80","https://images.unsplash.com/photo-1583511655826-05700d52f4d9?auto=format&amp;fit=crop&amp;w=900&amp;q=80","https://images.unsplash.com/photo-1561037404-61cd46aa615b?auto=format&amp;fit=crop&amp;w=900&amp;q=80"]</field>
+    </record>
+    <record id="animal_pudding" model="warm.paws.animal">
+        <field name="name">布丁</field>
+        <field name="type">dog</field>
+        <field name="breed">柴犬</field>
+        <field name="age">2歲</field>
+        <field name="age_value">2</field>
+        <field name="gender">女生</field>
+        <field name="personality">聰明勇敢，對熟人非常忠心。</field>
+        <field name="health_status">良好，已完成結紮</field>
+        <field name="vaccine_info">已完成基礎疫苗，入住前會再次確認健康紀錄。</field>
+        <field name="neutered">yes</field>
+        <field name="rescue_story">牠曾在街頭流浪一段時間，經過照護後恢復健康，正在等待一個穩定的家。</field>
+        <field name="weight">7.4</field>
+        <field name="images_json">["https://images.unsplash.com/photo-1598133894008-61f7fdb8cc3a?auto=format&amp;fit=crop&amp;w=900&amp;q=80","https://images.unsplash.com/photo-1587300003388-59208cc962cb?auto=format&amp;fit=crop&amp;w=900&amp;q=80","https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&amp;fit=crop&amp;w=900&amp;q=80"]</field>
+    </record>
+    <record id="animal_orange" model="warm.paws.animal">
+        <field name="name">小橘</field>
+        <field name="type">cat</field>
+        <field name="breed">米克斯貓</field>
+        <field name="age">8個月</field>
+        <field name="age_value">0.66</field>
+        <field name="gender">男生</field>
+        <field name="personality">親人愛玩，好奇心強。</field>
+        <field name="health_status">良好，已施打疫苗</field>
+        <field name="vaccine_info">核心疫苗已完成。</field>
+        <field name="neutered">no</field>
+        <field name="rescue_story">牠原本因家庭變故來到中心，個性溫柔，很適合願意慢慢陪伴的新家人。</field>
+        <field name="weight">3.1</field>
+        <field name="images_json">["https://images.unsplash.com/photo-1573865526739-10659fec78a5?auto=format&amp;fit=crop&amp;w=900&amp;q=80","https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&amp;fit=crop&amp;w=900&amp;q=80","https://images.unsplash.com/photo-1495360010541-f48722b34f7d?auto=format&amp;fit=crop&amp;w=900&amp;q=80"]</field>
+    </record>
+</odoo>

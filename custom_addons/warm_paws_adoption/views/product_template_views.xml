@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="warm_paws_product_template_form_inherit" model="ir.ui.view">
+        <field name="name">product.template.form.warm.paws.inherit</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet//group" position="inside">
+                <group string="暖心毛孩上架">
+                    <field name="is_adoptable_animal"/>
+                    <field name="animal_status" invisible="not is_adoptable_animal"/>
+                </group>
+            </xpath>
+
+            <xpath expr="//notebook" position="inside">
+                <page string="毛孩認養資料" invisible="not is_adoptable_animal">
+                    <group string="基本資料">
+                        <group>
+                            <field name="animal_type"/>
+                            <field name="animal_breed"/>
+                            <field name="animal_age"/>
+                            <field name="animal_age_value"/>
+                            <field name="animal_gender"/>
+                            <field name="animal_weight"/>
+                            <field name="animal_location"/>
+                        </group>
+                        <group>
+                            <field name="animal_status"/>
+                            <field name="animal_neutered"/>
+                            <field name="animal_chip_status"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="個性與關於">
+                            <group>
+                                <field name="animal_personality"/>
+                                <field name="animal_health_status"/>
+                            </group>
+                            <field name="animal_rescue_story"/>
+                            <field name="animal_about" placeholder="可輸入多段文字，前端會依換行分段顯示。"/>
+                        </page>
+
+                        <page string="健康紀錄">
+                            <group>
+                                <field name="animal_vaccine_info"/>
+                                <field name="animal_deworming_status"/>
+                                <field name="animal_neutered"/>
+                                <field name="animal_chip_implant_status"/>
+                                <field name="animal_health_record_status"/>
+                            </group>
+                        </page>
+
+                        <page string="個性特質">
+                            <field name="animal_traits" placeholder="活潑好動,親人撒嬌,喜歡玩耍,聰明好學,不挑食"/>
+                            <group string="評分（1 到 5）">
+                                <field name="animal_rating_human"/>
+                                <field name="animal_rating_active"/>
+                                <field name="animal_rating_train"/>
+                                <field name="animal_rating_cat"/>
+                                <field name="animal_rating_dog"/>
+                            </group>
+                        </page>
+
+                        <page string="適合家庭">
+                            <field name="animal_suitable_home" placeholder="每一行輸入一個條件。"/>
+                        </page>
+
+                        <page string="認養頁照片">
+                            <field name="animal_image_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="image" widget="image"/>
+                                </list>
+                                <form>
+                                    <sheet>
+                                        <group>
+                                            <field name="sequence"/>
+                                            <field name="name"/>
+                                            <field name="image" widget="image"/>
+                                            <field name="mimetype"/>
+                                        </group>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
+                    </notebook>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="warm_paws_product_template_search_inherit" model="ir.ui.view">
+        <field name="name">product.template.search.warm.paws.inherit</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_search_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <filter name="warm_paws_adoptable" string="認養毛孩" domain="[('is_adoptable_animal','=',True)]"/>
+                <filter name="warm_paws_dog" string="狗狗" domain="[('animal_type','=','dog')]"/>
+                <filter name="warm_paws_cat" string="貓咪" domain="[('animal_type','=','cat')]"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="warm_paws_product_animal_action" model="ir.actions.act_window">
+        <field name="name">上架毛孩產品</field>
+        <field name="res_model">product.template</field>
+        <field name="view_mode">list,form,kanban</field>
+        <field name="domain">[('is_adoptable_animal','=',True)]</field>
+        <field name="context">{'default_is_adoptable_animal': True, 'default_type': 'service'}</field>
+    </record>
+</odoo>

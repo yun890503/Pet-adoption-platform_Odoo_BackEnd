@@ -1,0 +1,39 @@
+<odoo>
+    <record id="warm_paws_sale_order_form_inherit" model="ir.ui.view">
+        <field name="name">warm.paws.sale.order.form.inherit</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button
+                    name="action_warm_paws_complete_adoption"
+                    string="完成認養"
+                    type="object"
+                    class="btn-primary"
+                    invisible="not is_warm_paws_adoption or state != 'sale' or warm_paws_adoption_stage == 'completed'"
+                />
+            </xpath>
+            <xpath expr="//sheet/notebook" position="inside">
+                <page string="暖心毛孩認養" invisible="not is_warm_paws_adoption">
+                    <group>
+                        <group>
+                            <field name="is_warm_paws_adoption"/>
+                            <field name="warm_paws_animal_product_id"/>
+                            <field name="warm_paws_adoption_stage"/>
+                            <field name="warm_paws_completed_date"/>
+                        </group>
+                        <group>
+                            <field name="warm_paws_applicant_phone"/>
+                            <field name="warm_paws_applicant_city"/>
+                            <field name="warm_paws_other_pets"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="warm_paws_pet_experience"/>
+                        <field name="warm_paws_family_members"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

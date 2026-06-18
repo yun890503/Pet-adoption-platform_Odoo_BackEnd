@@ -1,0 +1,23 @@
+{
+    "name": "Warm Paws Adoption",
+    "summary": "Pet adoption backend for Warm Paws platform",
+    "version": "18.0.1.0.0",
+    "category": "Services",
+    "author": "Warm Paws",
+    "license": "LGPL-3",
+    "depends": ["base", "mail", "web", "sale_management", "product", "calendar"],
+    "data": [
+        "security/ir.model.access.csv",
+        "views/product_template_views.xml",
+        "views/animal_views.xml",
+        "views/adoption_inquiry_views.xml",
+        "views/volunteer_application_views.xml",
+        "views/contact_message_views.xml",
+        "views/member_views.xml",
+        "views/sale_order_views.xml",
+        "views/warm_paws_menus.xml",
+        "data/demo_products.xml",
+    ],
+    "application": True,
+    "installable": True,
+}

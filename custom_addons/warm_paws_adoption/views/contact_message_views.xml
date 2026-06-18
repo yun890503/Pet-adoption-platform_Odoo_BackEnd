@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="warm_paws_contact_message_action" model="ir.actions.act_window">
+        <field name="name">聯絡訊息</field>
+        <field name="res_model">warm.paws.contact.message</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="warm_paws_contact_message_view_list" model="ir.ui.view">
+        <field name="name">warm.paws.contact.message.list</field>
+        <field name="model">warm.paws.contact.message</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="create_date"/>
+                <field name="name"/>
+                <field name="email"/>
+                <field name="phone"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="warm_paws_contact_message_view_form" model="ir.ui.view">
+        <field name="name">warm.paws.contact.message.form</field>
+        <field name="model">warm.paws.contact.message</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="state"/>
+                        <field name="name"/>
+                        <field name="email"/>
+                        <field name="phone"/>
+                    </group>
+                    <field name="message"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+</odoo>

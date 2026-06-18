@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="warm_paws_animal_action" model="ir.actions.act_window">
+        <field name="name">毛孩資料</field>
+        <field name="res_model">warm.paws.animal</field>
+        <field name="view_mode">list,form,kanban</field>
+    </record>
+
+    <record id="warm_paws_animal_view_list" model="ir.ui.view">
+        <field name="name">warm.paws.animal.list</field>
+        <field name="model">warm.paws.animal</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="type"/>
+                <field name="breed"/>
+                <field name="age"/>
+                <field name="gender"/>
+                <field name="status"/>
+                <field name="inquiry_count"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="warm_paws_animal_view_form" model="ir.ui.view">
+        <field name="name">warm.paws.animal.form</field>
+        <field name="model">warm.paws.animal</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="type"/>
+                            <field name="breed"/>
+                            <field name="age"/>
+                            <field name="age_value"/>
+                            <field name="gender"/>
+                            <field name="weight"/>
+                            <field name="location"/>
+                        </group>
+                        <group>
+                            <field name="status"/>
+                            <field name="neutered"/>
+                            <field name="active"/>
+                            <field name="inquiry_count" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="照護資訊">
+                            <field name="personality"/>
+                            <field name="health_status"/>
+                            <field name="vaccine_info"/>
+                            <field name="rescue_story"/>
+                        </page>
+                        <page string="圖片 URL">
+                            <field name="images_json" placeholder='["https://example.com/photo.jpg"]'/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+</odoo>

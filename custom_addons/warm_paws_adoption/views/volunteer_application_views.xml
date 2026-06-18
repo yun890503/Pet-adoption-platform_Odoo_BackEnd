@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="warm_paws_volunteer_application_action" model="ir.actions.act_window">
+        <field name="name">志工申請</field>
+        <field name="res_model">warm.paws.volunteer.application</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="warm_paws_volunteer_application_view_list" model="ir.ui.view">
+        <field name="name">warm.paws.volunteer.application.list</field>
+        <field name="model">warm.paws.volunteer.application</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="create_date"/>
+                <field name="name"/>
+                <field name="phone"/>
+                <field name="email"/>
+                <field name="available_time"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="warm_paws_volunteer_application_view_form" model="ir.ui.view">
+        <field name="name">warm.paws.volunteer.application.form</field>
+        <field name="model">warm.paws.volunteer.application</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="state"/>
+                        <field name="name"/>
+                        <field name="phone"/>
+                        <field name="email"/>
+                        <field name="available_time"/>
+                    </group>
+                    <field name="message"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+</odoo>
