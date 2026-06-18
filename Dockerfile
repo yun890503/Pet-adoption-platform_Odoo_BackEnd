@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -28,12 +28,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
-    && pip install --no-cache-dir -r /tmp/requirements.txt
+    && pip install --no-cache-dir --prefer-binary -r /tmp/requirements.txt
 
 COPY . /app
 
 RUN chmod +x /app/entrypoint.sh
 
-EXPOSE 8069
+EXPOSE 8080
 
 CMD ["/app/entrypoint.sh"]
