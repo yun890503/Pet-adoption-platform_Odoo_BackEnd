@@ -433,6 +433,70 @@ class WarmPawsApi(http.Controller):
         payload["login"] = user.login
         return cors_response(payload)
 
+    @http.route("/warm_paws/api/line-login", type="http", auth="public", methods=["POST", "OPTIONS"], csrf=False)
+    def line_login(self, **kwargs):
+        if is_preflight():
+            return cors_response({"ok": True})
+        data = json_body()
+        id_token = data.get("idToken") or ""
+        profile = data.get("profile") or {}
+        verified = request.env["warm.paws.line.service"].sudo().verify_id_token(id_token)
+        line_user_id = verified.get("sub") or profile.get("userId") or ""
+        if not line_user_id:
+            return cors_response({"message": "LINE login verification failed."}, status=401)
+
+        email = (verified.get("email") or data.get("email") or "").strip()
+        display_name = verified.get("name") or profile.get("displayName") or email or "LINE User"
+        picture_url = verified.get("picture") or profile.get("pictureUrl") or ""
+
+        partner = request.env["res.partner"].sudo().search([("warm_paws_line_user_id", "=", line_user_id)], limit=1)
+        user = request.env["res.users"].sudo()
+        if not partner and email:
+            user = request.env["res.users"].sudo().search(["|", ("login", "=", email), ("email", "=", email)], limit=1)
+            partner = user.partner_id.sudo() if user else partner
+        if not partner:
+            login = email or f"line_{line_user_id}@warm-paws.local"
+            existing_user = request.env["res.users"].sudo().search([("login", "=", login)], limit=1)
+            if existing_user:
+                user = existing_user
+                partner = user.partner_id.sudo()
+            else:
+                user = (
+                    request.env["res.users"]
+                    .sudo()
+                    .with_context(no_reset_password=True)
+                    .create(
+                        {
+                            "name": display_name,
+                            "login": login,
+                            "email": email,
+                            "password": line_user_id,
+                            "groups_id": [(6, 0, [])],
+                        }
+                    )
+                )
+                partner = user.partner_id.sudo()
+        else:
+            users = request.env["res.users"].sudo().search([("partner_id", "=", partner.id)], limit=1)
+            user = users or user
+
+        values = {
+            "name": partner.name or display_name,
+            "warm_paws_line_user_id": line_user_id,
+            "warm_paws_line_display_name": display_name,
+            "warm_paws_line_picture_url": picture_url,
+            "warm_paws_line_email": email,
+            "warm_paws_line_notify": True,
+        }
+        if email and not partner.email:
+            values["email"] = email
+        partner.write(values)
+        partner.warm_paws_refresh_token()
+        payload = partner.to_warm_paws_member_dict(include_token=True)
+        payload["userId"] = user.id if user else False
+        payload["login"] = user.login if user else ""
+        return cors_response(payload)
+
     @http.route("/warm_paws/api/me", type="http", auth="public", methods=["GET", "PUT", "PATCH", "OPTIONS"], csrf=False)
     def me(self, **kwargs):
         if is_preflight():

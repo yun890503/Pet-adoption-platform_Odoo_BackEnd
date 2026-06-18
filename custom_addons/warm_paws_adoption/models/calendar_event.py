@@ -19,6 +19,25 @@ class CalendarEvent(models.Model):
         index=True,
     )
 
+    @models.model_create_multi
+    def create(self, vals_list):
+        events = super().create(vals_list)
+        service = self.env["warm.paws.line.service"].sudo()
+        for event in events.filtered(lambda item: item.is_warm_paws_visit and item.warm_paws_visit_state != "cancelled"):
+            service.notify_visit(event, "created")
+        return events
+
+    def write(self, vals):
+        tracked = "warm_paws_visit_state" in vals
+        before = {event.id: event.warm_paws_visit_state for event in self if event.is_warm_paws_visit} if tracked else {}
+        result = super().write(vals)
+        if tracked:
+            service = self.env["warm.paws.line.service"].sudo()
+            for event in self.filtered("is_warm_paws_visit"):
+                if before.get(event.id) != event.warm_paws_visit_state:
+                    service.notify_visit(event, "cancelled" if event.warm_paws_visit_state == "cancelled" else "created")
+        return result
+
     def to_warm_paws_visit_dict(self):
         self.ensure_one()
         animal = self.warm_paws_animal_product_id

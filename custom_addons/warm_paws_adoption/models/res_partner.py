@@ -6,6 +6,11 @@ class ResPartner(models.Model):
     _inherit = "res.partner"
 
     warm_paws_api_token = fields.Char(copy=False, index=True)
+    warm_paws_line_user_id = fields.Char(string="LINE User ID", copy=False, index=True)
+    warm_paws_line_display_name = fields.Char(string="LINE Display Name")
+    warm_paws_line_picture_url = fields.Char(string="LINE Picture URL")
+    warm_paws_line_email = fields.Char(string="LINE Email")
+    warm_paws_line_notify = fields.Boolean(string="Enable LINE Notifications", default=True)
     warm_paws_favorite_ids = fields.Many2many(
         "product.template",
         "warm_paws_partner_product_favorite_rel",
@@ -35,6 +40,10 @@ class ResPartner(models.Model):
             "zip": self.zip or "",
             "address": self.contact_address or "",
             "favorites": self.warm_paws_favorite_ids.ids,
+            "lineUserId": self.warm_paws_line_user_id or "",
+            "lineDisplayName": self.warm_paws_line_display_name or "",
+            "linePictureUrl": self.warm_paws_line_picture_url or "",
+            "lineNotify": bool(self.warm_paws_line_notify),
         }
         if include_token:
             payload["token"] = self.warm_paws_api_token

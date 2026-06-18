@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="warm_paws_res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">warm.paws.res.config.settings.view.form</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app string="Warm Paws LINE" name="warm_paws_line_settings">
+                    <block title="LINE Login and Message API">
+                        <setting string="LINE LIFF ID">
+                            <field name="warm_paws_line_liff_id"/>
+                        </setting>
+                        <setting string="LINE LIFF URL">
+                            <field name="warm_paws_line_liff_url"/>
+                        </setting>
+                        <setting string="LINE Login Channel ID">
+                            <field name="warm_paws_line_channel_id"/>
+                        </setting>
+                        <setting string="LINE Messaging Channel ID">
+                            <field name="warm_paws_line_messaging_channel_id"/>
+                        </setting>
+                        <setting string="LINE Channel Secret">
+                            <field name="warm_paws_line_channel_secret" password="True"/>
+                        </setting>
+                        <setting string="LINE Channel Access Token">
+                            <field name="warm_paws_line_channel_access_token" password="True"/>
+                        </setting>
+                        <setting string="Frontend URL">
+                            <field name="warm_paws_frontend_url"/>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>

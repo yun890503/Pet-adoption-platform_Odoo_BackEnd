@@ -28,6 +28,38 @@ class SaleOrder(models.Model):
     warm_paws_other_pets = fields.Char(string="其他寵物")
     warm_paws_completed_date = fields.Date(string="完成認養日期")
 
+    def _warm_paws_line_event_name(self):
+        self.ensure_one()
+        if self.state == "cancel":
+            return "cancelled"
+        if self.warm_paws_adoption_stage == "completed":
+            return "completed"
+        if self.state == "sale" or self.warm_paws_adoption_stage == "approved":
+            return "approved"
+        return "reviewing"
+
+    def _warm_paws_notify_adoption(self, event_name=None):
+        service = self.env["warm.paws.line.service"].sudo()
+        for order in self.filtered("is_warm_paws_adoption"):
+            service.notify_adoption(order, event_name or order._warm_paws_line_event_name())
+
+    @models.model_create_multi
+    def create(self, vals_list):
+        orders = super().create(vals_list)
+        orders.filtered("is_warm_paws_adoption")._warm_paws_notify_adoption("created")
+        return orders
+
+    def write(self, vals):
+        tracked = "state" in vals or "warm_paws_adoption_stage" in vals
+        before = {order.id: order._warm_paws_line_event_name() for order in self if order.is_warm_paws_adoption} if tracked else {}
+        result = super().write(vals)
+        if tracked:
+            for order in self.filtered("is_warm_paws_adoption"):
+                after = order._warm_paws_line_event_name()
+                if before.get(order.id) != after:
+                    order._warm_paws_notify_adoption(after)
+        return result
+
     def _compute_warm_paws_stage_from_state(self):
         for order in self:
             if not order.is_warm_paws_adoption or order.warm_paws_adoption_stage == "completed":

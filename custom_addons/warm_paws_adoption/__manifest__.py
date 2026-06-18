@@ -14,6 +14,7 @@
         "views/volunteer_application_views.xml",
         "views/contact_message_views.xml",
         "views/member_views.xml",
+        "views/res_config_settings_views.xml",
         "views/sale_order_views.xml",
         "views/warm_paws_menus.xml",
         "data/demo_products.xml",
