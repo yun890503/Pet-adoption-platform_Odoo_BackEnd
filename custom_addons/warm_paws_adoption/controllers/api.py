@@ -49,6 +49,10 @@ def current_db():
     return request.db or "Pet-adoption-platform"
 
 
+def is_preflight():
+    return request.httprequest.method == "OPTIONS"
+
+
 def parse_int(value):
     try:
         return int(value or 0)
@@ -113,8 +117,10 @@ class WarmPawsApi(http.Controller):
             return cors_response({"message": "Animal not found."}, status=404)
         return cors_response(animal.to_warm_paws_frontend_dict())
 
-    @http.route("/warm_paws/api/adoption-inquiries", type="http", auth="public", methods=["POST"], csrf=False)
+    @http.route("/warm_paws/api/adoption-inquiries", type="http", auth="public", methods=["POST", "OPTIONS"], csrf=False)
     def adoption_inquiry(self, **kwargs):
+        if is_preflight():
+            return cors_response({"ok": True})
         if bearer_token():
             return self.adoption_application()
 
@@ -140,8 +146,10 @@ class WarmPawsApi(http.Controller):
         )
         return cors_response({"id": inquiry.id, "message": "Adoption inquiry created."}, status=201)
 
-    @http.route("/warm_paws/api/adoption-applications", type="http", auth="public", methods=["POST"], csrf=False)
+    @http.route("/warm_paws/api/adoption-applications", type="http", auth="public", methods=["POST", "OPTIONS"], csrf=False)
     def adoption_application(self, **kwargs):
+        if is_preflight():
+            return cors_response({"ok": True})
         partner = current_partner()
         if not partner:
             return cors_response({"message": "Unauthorized."}, status=401)
@@ -185,8 +193,10 @@ class WarmPawsApi(http.Controller):
         order = request.env["sale.order"].sudo().create(values)
         return cors_response(order.to_warm_paws_application_dict(), status=201)
 
-    @http.route("/warm_paws/api/me/adoption-applications", type="http", auth="public", methods=["GET"], csrf=False)
+    @http.route("/warm_paws/api/me/adoption-applications", type="http", auth="public", methods=["GET", "OPTIONS"], csrf=False)
     def my_adoption_applications(self, **kwargs):
+        if is_preflight():
+            return cors_response({"ok": True})
         partner = current_partner()
         if not partner:
             return cors_response({"message": "Unauthorized."}, status=401)
@@ -194,8 +204,10 @@ class WarmPawsApi(http.Controller):
         orders = request.env["sale.order"].sudo().search(sale_order_domain_for_partner(partner), order="date_order desc, id desc")
         return cors_response([order.to_warm_paws_application_dict() for order in orders])
 
-    @http.route("/warm_paws/api/me/adoption-records", type="http", auth="public", methods=["GET"], csrf=False)
+    @http.route("/warm_paws/api/me/adoption-records", type="http", auth="public", methods=["GET", "OPTIONS"], csrf=False)
     def my_adoption_records(self, **kwargs):
+        if is_preflight():
+            return cors_response({"ok": True})
         partner = current_partner()
         if not partner:
             return cors_response({"message": "Unauthorized."}, status=401)
@@ -204,8 +216,10 @@ class WarmPawsApi(http.Controller):
         orders = request.env["sale.order"].sudo().search(domain, order="warm_paws_completed_date desc, date_order desc")
         return cors_response([order.to_warm_paws_application_dict() for order in orders])
 
-    @http.route("/warm_paws/api/visit-appointments", type="http", auth="public", methods=["POST"], csrf=False)
+    @http.route("/warm_paws/api/visit-appointments", type="http", auth="public", methods=["POST", "OPTIONS"], csrf=False)
     def visit_appointment(self, **kwargs):
+        if is_preflight():
+            return cors_response({"ok": True})
         partner = current_partner()
         if not partner:
             return cors_response({"message": "Unauthorized."}, status=401)
@@ -284,8 +298,10 @@ class WarmPawsApi(http.Controller):
         )
         return cors_response(event.to_warm_paws_visit_dict(), status=201)
 
-    @http.route("/warm_paws/api/visit-appointments/<int:event_id>/cancel", type="http", auth="public", methods=["POST"], csrf=False)
+    @http.route("/warm_paws/api/visit-appointments/<int:event_id>/cancel", type="http", auth="public", methods=["POST", "OPTIONS"], csrf=False)
     def cancel_visit_appointment(self, event_id, **kwargs):
+        if is_preflight():
+            return cors_response({"ok": True})
         partner = current_partner()
         if not partner:
             return cors_response({"message": "Unauthorized."}, status=401)
@@ -297,8 +313,10 @@ class WarmPawsApi(http.Controller):
         event.write({"warm_paws_visit_state": "cancelled"})
         return cors_response(event.to_warm_paws_visit_dict())
 
-    @http.route("/warm_paws/api/me/visit-appointments", type="http", auth="public", methods=["GET"], csrf=False)
+    @http.route("/warm_paws/api/me/visit-appointments", type="http", auth="public", methods=["GET", "OPTIONS"], csrf=False)
     def my_visit_appointments(self, **kwargs):
+        if is_preflight():
+            return cors_response({"ok": True})
         partner = current_partner()
         if not partner:
             return cors_response({"message": "Unauthorized."}, status=401)
@@ -310,8 +328,10 @@ class WarmPawsApi(http.Controller):
         )
         return cors_response([event.to_warm_paws_visit_dict() for event in events])
 
-    @http.route("/warm_paws/api/volunteer-applications", type="http", auth="public", methods=["POST"], csrf=False)
+    @http.route("/warm_paws/api/volunteer-applications", type="http", auth="public", methods=["POST", "OPTIONS"], csrf=False)
     def volunteer_application(self, **kwargs):
+        if is_preflight():
+            return cors_response({"ok": True})
         data = json_body()
         application = request.env["warm.paws.volunteer.application"].sudo().create(
             {
@@ -324,8 +344,10 @@ class WarmPawsApi(http.Controller):
         )
         return cors_response({"id": application.id, "message": "Volunteer application created."}, status=201)
 
-    @http.route("/warm_paws/api/contact-messages", type="http", auth="public", methods=["POST"], csrf=False)
+    @http.route("/warm_paws/api/contact-messages", type="http", auth="public", methods=["POST", "OPTIONS"], csrf=False)
     def contact_message(self, **kwargs):
+        if is_preflight():
+            return cors_response({"ok": True})
         data = json_body()
         message = request.env["warm.paws.contact.message"].sudo().create(
             {
@@ -337,8 +359,10 @@ class WarmPawsApi(http.Controller):
         )
         return cors_response({"id": message.id, "message": "Contact message created."}, status=201)
 
-    @http.route("/warm_paws/api/register", type="http", auth="public", methods=["POST"], csrf=False)
+    @http.route("/warm_paws/api/register", type="http", auth="public", methods=["POST", "OPTIONS"], csrf=False)
     def register(self, **kwargs):
+        if is_preflight():
+            return cors_response({"ok": True})
         data = json_body()
         email = (data.get("email") or "").strip()
         password = data.get("password") or ""
@@ -373,8 +397,10 @@ class WarmPawsApi(http.Controller):
         partner.warm_paws_refresh_token()
         return cors_response(partner.to_warm_paws_member_dict(include_token=True), status=201)
 
-    @http.route("/warm_paws/api/login", type="http", auth="public", methods=["POST"], csrf=False)
+    @http.route("/warm_paws/api/login", type="http", auth="public", methods=["POST", "OPTIONS"], csrf=False)
     def login(self, **kwargs):
+        if is_preflight():
+            return cors_response({"ok": True})
         data = json_body()
         login = (data.get("email") or data.get("login") or "").strip()
         password = data.get("password") or ""
@@ -407,8 +433,10 @@ class WarmPawsApi(http.Controller):
         payload["login"] = user.login
         return cors_response(payload)
 
-    @http.route("/warm_paws/api/me", type="http", auth="public", methods=["GET", "PUT", "PATCH"], csrf=False)
+    @http.route("/warm_paws/api/me", type="http", auth="public", methods=["GET", "PUT", "PATCH", "OPTIONS"], csrf=False)
     def me(self, **kwargs):
+        if is_preflight():
+            return cors_response({"ok": True})
         partner = current_partner()
         if not partner:
             return cors_response({"message": "Unauthorized."}, status=401)
@@ -434,8 +462,10 @@ class WarmPawsApi(http.Controller):
 
         return cors_response(partner.to_warm_paws_member_dict(include_token=True))
 
-    @http.route("/warm_paws/api/me/favorites", type="http", auth="public", methods=["GET", "POST"], csrf=False)
+    @http.route("/warm_paws/api/me/favorites", type="http", auth="public", methods=["GET", "POST", "OPTIONS"], csrf=False)
     def my_favorites(self, **kwargs):
+        if is_preflight():
+            return cors_response({"ok": True})
         partner = current_partner()
         if not partner:
             return cors_response({"message": "Unauthorized."}, status=401)
@@ -455,8 +485,10 @@ class WarmPawsApi(http.Controller):
 
         return cors_response([animal.to_warm_paws_frontend_dict() for animal in partner.warm_paws_favorite_ids])
 
-    @http.route("/warm_paws/api/members/<int:member_id>/favorites", type="http", auth="public", methods=["GET", "POST"], csrf=False)
+    @http.route("/warm_paws/api/members/<int:member_id>/favorites", type="http", auth="public", methods=["GET", "POST", "OPTIONS"], csrf=False)
     def member_favorites(self, member_id, **kwargs):
+        if is_preflight():
+            return cors_response({"ok": True})
         member = request.env["res.partner"].sudo().browse(member_id).exists()
         if not member:
             return cors_response({"message": "Member not found."}, status=404)
