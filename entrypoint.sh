@@ -9,6 +9,7 @@ set -e
 : "${DB_NAME:=Pet-adoption-platform}"
 : "${ODOO_ADMIN_PASSWORD:=admin}"
 : "${ODOO_INIT_MODULES:=base,warm_paws_adoption}"
+: "${ODOO_UPDATE_MODULES:=warm_paws_adoption}"
 : "${LINE_LIFF_ID:=2010432240-mRjM2C9g}"
 : "${LINE_CHANNEL_ID:=2010432240}"
 : "${LINE_MESSAGING_CHANNEL_ID:=2010436798}"
@@ -21,11 +22,14 @@ cp /app/odoo-zeabur.conf "${CONFIG_FILE}"
 sed -i "s/^admin_passwd = .*/admin_passwd = ${ODOO_ADMIN_PASSWORD}/" "${CONFIG_FILE}"
 
 INIT_ARGS=""
+UPDATE_ARGS=""
 export PGPASSWORD="${DB_PASSWORD}"
 if command -v psql >/dev/null 2>&1; then
   DB_INITIALIZED="$(psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" -tAc "SELECT to_regclass('public.ir_module_module') IS NOT NULL;" 2>/dev/null || echo "f")"
   if [ "${DB_INITIALIZED}" != "t" ]; then
     INIT_ARGS="-i ${ODOO_INIT_MODULES}"
+  elif [ -n "${ODOO_UPDATE_MODULES}" ]; then
+    UPDATE_ARGS="-u ${ODOO_UPDATE_MODULES}"
   fi
 else
   INIT_ARGS="-i ${ODOO_INIT_MODULES}"
@@ -57,4 +61,5 @@ exec python /app/odoo-bin \
   --db_password="${DB_PASSWORD}" \
   -d "${DB_NAME}" \
   ${INIT_ARGS} \
+  ${UPDATE_ARGS} \
   --without-demo=all
