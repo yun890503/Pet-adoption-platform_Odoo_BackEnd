@@ -10,6 +10,8 @@ set -e
 : "${ODOO_ADMIN_PASSWORD:=admin}"
 : "${ODOO_INIT_MODULES:=base,warm_paws_adoption}"
 : "${ODOO_UPDATE_MODULES:=warm_paws_adoption}"
+: "${ODOO_WORKERS:=0}"
+: "${ODOO_MAX_CRON_THREADS:=1}"
 : "${LINE_LIFF_ID:=2010432240-mRjM2C9g}"
 : "${LINE_CHANNEL_ID:=2010432240}"
 : "${LINE_MESSAGING_CHANNEL_ID:=2010436798}"
@@ -59,6 +61,8 @@ exec python /app/odoo-bin \
   --db_port="${DB_PORT}" \
   --db_user="${DB_USER}" \
   --db_password="${DB_PASSWORD}" \
+  --workers="${ODOO_WORKERS}" \
+  --max-cron-threads="${ODOO_MAX_CRON_THREADS}" \
   -d "${DB_NAME}" \
   ${INIT_ARGS} \
   ${UPDATE_ARGS} \

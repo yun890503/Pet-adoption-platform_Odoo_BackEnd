@@ -8,16 +8,19 @@ from odoo.exceptions import AccessDenied
 from odoo.http import request
 
 
-def cors_response(payload=None, status=200):
+def cors_response(payload=None, status=200, extra_headers=None):
     body = json.dumps(payload or {}, ensure_ascii=False)
+    headers = [
+        ("Content-Type", "application/json; charset=utf-8"),
+        ("Access-Control-Allow-Origin", "*"),
+        ("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS"),
+        ("Access-Control-Allow-Headers", "Content-Type, Authorization"),
+    ]
+    if extra_headers:
+        headers.extend(extra_headers)
     return request.make_response(
         body,
-        headers=[
-            ("Content-Type", "application/json; charset=utf-8"),
-            ("Access-Control-Allow-Origin", "*"),
-            ("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS"),
-            ("Access-Control-Allow-Headers", "Content-Type, Authorization"),
-        ],
+        headers=headers,
         status=status,
     )
 
@@ -71,6 +74,10 @@ def sale_order_domain_for_partner(partner):
     return [("is_warm_paws_adoption", "=", True), ("partner_id", "=", partner.id)]
 
 
+def favorite_ids_payload(partner):
+    return {"favorites": partner.warm_paws_favorite_ids.ids}
+
+
 def parse_visit_datetime(date_value, time_value):
     date_text = (date_value or "").strip()
     time_text = (time_value or "").strip()
@@ -93,7 +100,7 @@ class WarmPawsApi(http.Controller):
         key = cache_key("list", kwargs)
         cached = cache.get_json(key)
         if cached is not None:
-            return cors_response(cached)
+            return cors_response(cached, extra_headers=[("X-Warm-Paws-Cache", "HIT")])
 
         domain = [("active", "=", True), ("is_adoptable_animal", "=", True)]
         animal_type = kwargs.get("type")
@@ -121,7 +128,7 @@ class WarmPawsApi(http.Controller):
         records = request.env["product.template"].sudo().search(domain, order=order, limit=limit)
         payload = [record.to_warm_paws_frontend_dict() for record in records]
         cache.set_json(key, payload)
-        return cors_response(payload)
+        return cors_response(payload, extra_headers=[("X-Warm-Paws-Cache", "MISS")])
 
     @http.route("/warm_paws/api/animals/<int:animal_id>", type="http", auth="public", methods=["GET"], csrf=False)
     def animal_detail(self, animal_id, **kwargs):
@@ -129,7 +136,7 @@ class WarmPawsApi(http.Controller):
         key = cache_key("detail", {"id": animal_id})
         cached = cache.get_json(key)
         if cached is not None:
-            return cors_response(cached)
+            return cors_response(cached, extra_headers=[("X-Warm-Paws-Cache", "HIT")])
 
         animal = request.env["product.template"].sudo().browse(animal_id).exists()
         if animal and not animal.is_adoptable_animal:
@@ -138,7 +145,7 @@ class WarmPawsApi(http.Controller):
             return cors_response({"message": "Animal not found."}, status=404)
         payload = animal.to_warm_paws_frontend_dict()
         cache.set_json(key, payload)
-        return cors_response(payload)
+        return cors_response(payload, extra_headers=[("X-Warm-Paws-Cache", "MISS")])
 
     @http.route("/warm_paws/api/adoption-inquiries", type="http", auth="public", methods=["POST", "OPTIONS"], csrf=False)
     def adoption_inquiry(self, **kwargs):
@@ -620,6 +627,7 @@ class WarmPawsApi(http.Controller):
                 partner.warm_paws_favorite_ids = [(3, animal.id)]
             else:
                 partner.warm_paws_favorite_ids = [(4, animal.id)]
+            return cors_response(favorite_ids_payload(partner), extra_headers=[("X-Warm-Paws-Favorites", "IDS")])
 
         return cors_response([animal.to_warm_paws_frontend_dict() for animal in partner.warm_paws_favorite_ids])
 
@@ -642,5 +650,6 @@ class WarmPawsApi(http.Controller):
                 member.warm_paws_favorite_ids = [(3, animal.id)]
             else:
                 member.warm_paws_favorite_ids = [(4, animal.id)]
+            return cors_response(favorite_ids_payload(member), extra_headers=[("X-Warm-Paws-Favorites", "IDS")])
 
         return cors_response([animal.to_warm_paws_frontend_dict() for animal in member.warm_paws_favorite_ids])
