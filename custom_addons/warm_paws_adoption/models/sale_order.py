@@ -1,4 +1,4 @@
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class SaleOrder(models.Model):
@@ -43,7 +43,7 @@ class SaleOrder(models.Model):
         for order in self.filtered("is_warm_paws_adoption"):
             service.notify_adoption(order, event_name or order._warm_paws_line_event_name())
 
-    @models.model_create_multi
+    @api.model_create_multi
     def create(self, vals_list):
         orders = super().create(vals_list)
         orders.filtered("is_warm_paws_adoption")._warm_paws_notify_adoption("created")

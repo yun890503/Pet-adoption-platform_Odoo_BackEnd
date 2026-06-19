@@ -1,4 +1,4 @@
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class CalendarEvent(models.Model):
@@ -19,7 +19,7 @@ class CalendarEvent(models.Model):
         index=True,
     )
 
-    @models.model_create_multi
+    @api.model_create_multi
     def create(self, vals_list):
         events = super().create(vals_list)
         service = self.env["warm.paws.line.service"].sudo()
