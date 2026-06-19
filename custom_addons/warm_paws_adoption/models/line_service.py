@@ -75,20 +75,6 @@ class WarmPawsLineService(models.AbstractModel):
         base = self._param("frontend_url", os.environ.get("FRONTEND_URL", "https://adoption-platform.zeabur.app")).rstrip("/")
         return f"{base}{path}"
 
-    def _backend_url(self):
-        base = (
-            self._param("backend_url")
-            or os.environ.get("BACKEND_URL")
-            or self.env["ir.config_parameter"].sudo().get_param("web.base.url")
-            or "https://heartwarming.zeabur.app"
-        )
-        return base.rstrip("/")
-
-    def _animal_image_url(self, animal):
-        if not animal:
-            return ""
-        return f"{self._backend_url()}/web/image/product.template/{animal.id}/image_512"
-
     def _plain_datetime(self, value):
         if not value:
             return "-"
@@ -98,51 +84,23 @@ class WarmPawsLineService(models.AbstractModel):
         except Exception:
             return str(value)
 
-    def _info_row(self, label, value, icon=""):
-        icon_box = {
-            "type": "box",
-            "layout": "vertical",
-            "width": "32px",
-            "height": "32px",
-            "cornerRadius": "16px",
-            "backgroundColor": "#eaf6ef",
-            "alignItems": "center",
-            "justifyContent": "center",
-            "contents": [{"type": "text", "text": icon or "•", "size": "sm", "align": "center", "color": "#2f7d5a"}],
-        }
-        return {
-            "type": "box",
-            "layout": "horizontal",
-            "spacing": "md",
-            "paddingTop": "8px",
-            "paddingBottom": "8px",
-            "contents": [
-                icon_box,
-                {"type": "text", "text": label, "color": "#2f7d5a", "size": "sm", "flex": 2, "gravity": "center"},
-                {
-                    "type": "text",
-                    "text": str(value or "-"),
-                    "color": "#2b2118",
-                    "size": "sm",
-                    "wrap": True,
-                    "flex": 4,
-                    "gravity": "center",
-                },
-            ],
-        }
-
-    def _status_color(self, event_name, kind):
-        if event_name in ("approved", "completed", "created"):
-            return "#2f8f67"
+    def _status_color(self, event_name):
         if event_name == "cancelled":
-            return "#d94343" if kind == "visit" else "#8b8f98"
-        if event_name == "reviewing":
-            return "#d7952c"
+            return "#9ca3af"
+        if event_name in ("approved", "completed"):
+            return "#2f8f67"
         return "#ff8a3d"
+
+    def _status_tint(self, event_name):
+        if event_name == "cancelled":
+            return "#f1f2f4"
+        if event_name in ("approved", "completed"):
+            return "#eef8f2"
+        return "#fff4e8"
 
     def _adoption_stage_label(self, event_name):
         return {
-            "created": "已收到申請",
+            "created": "審核中",
             "reviewing": "審核中",
             "approved": "已通過",
             "completed": "已完成認養",
@@ -152,97 +110,54 @@ class WarmPawsLineService(models.AbstractModel):
     def _visit_stage_label(self, event_name):
         return "預約已取消" if event_name == "cancelled" else "預約成功"
 
-    def _adoption_bubble(self, order, event_name):
-        animal = order.warm_paws_animal_product_id
-        status = self._adoption_stage_label(event_name)
-        status_color = self._status_color(event_name, "adoption")
-        action_path = "/profile/records" if event_name == "completed" else "/profile/applications"
-        action_label = "查看我的認養紀錄" if event_name == "completed" else "查看我的認養申請"
+    def _info_row(self, label, value):
+        return {
+            "type": "box",
+            "layout": "baseline",
+            "spacing": "md",
+            "paddingTop": "6px",
+            "paddingBottom": "6px",
+            "contents": [
+                {"type": "text", "text": label, "color": "#7b5439", "size": "sm", "flex": 2},
+                {
+                    "type": "text",
+                    "text": str(value or "-"),
+                    "color": "#24211f",
+                    "size": "sm",
+                    "wrap": True,
+                    "flex": 5,
+                },
+            ],
+        }
 
-        rows = [
-            ("毛孩", animal.name if animal else "-", "👤"),
-            ("品種", animal.animal_breed if animal else "-", "🐾"),
-            ("申請人", order.partner_id.name or "-", "👤"),
-            ("電話", order.warm_paws_applicant_phone or order.partner_id.phone or "-", "☎"),
-            ("居住縣市", order.warm_paws_applicant_city or "-", "⌖"),
-        ]
-        return self._green_bubble(
-            title="暖心毛孩認養申請提醒",
-            subtitle=order.name,
-            status=status,
-            status_color=status_color,
-            rows=rows,
-            action_label=action_label,
-            action_path=action_path,
-        )
-
-    def _visit_bubble(self, event, event_name):
-        animal = event.warm_paws_animal_product_id
-        partner = event.partner_ids[:1]
-        status = self._visit_stage_label(event_name)
-        status_color = self._status_color(event_name, "visit")
-        animal_name = animal.name if animal else "-"
-        applicant = partner.name if partner else "-"
-        rows = [
-            ("毛孩", animal_name, "🐾"),
-            ("訪視時間", self._plain_datetime(event.start), "📅"),
-            ("聯絡電話", event.warm_paws_phone or (partner.phone if partner else "-") or "-", "☎"),
-            ("備註", event.warm_paws_note or "-", "▤"),
-        ]
-        return self._brown_bubble(
-            title="暖心毛孩訪視預約提醒",
-            subtitle=f"認養訪視：{animal_name} - {applicant}",
-            status=status,
-            status_color=status_color,
-            image_url=self._animal_image_url(animal),
-            rows=rows,
-            action_label="查看預約詳情",
-            action_path="/profile/appointments",
-            reschedule_label="重新安排訪視",
-        )
-
-    def _green_bubble(self, title, subtitle, status, status_color, rows, action_label, action_path):
+    def _warm_card(self, title, subtitle, status, rows, action_label, action_path, header_color, footer_color, event_name):
+        status_color = self._status_color(event_name)
+        status_tint = self._status_tint(event_name)
         row_contents = []
         for index, row in enumerate(rows):
             if index:
-                row_contents.append({"type": "separator", "color": "#dce9df"})
-            row_contents.append(self._info_row(row[0], row[1], row[2]))
+                row_contents.append({"type": "separator", "color": "#eadfd4"})
+            row_contents.append(self._info_row(row[0], row[1]))
 
         return {
             "type": "bubble",
             "size": "mega",
             "header": {
                 "type": "box",
-                "layout": "horizontal",
-                "paddingAll": "20px",
-                "backgroundColor": "#65aa82",
+                "layout": "vertical",
+                "backgroundColor": header_color,
+                "paddingAll": "18px",
                 "contents": [
-                    {
-                        "type": "box",
-                        "layout": "vertical",
-                        "flex": 3,
-                        "contents": [
-                            {"type": "text", "text": title, "weight": "bold", "size": "xl", "color": "#ffffff", "wrap": True},
-                            {"type": "separator", "color": "#b8dcc8", "margin": "md"},
-                            {"type": "text", "text": subtitle or "-", "size": "md", "color": "#edf8f1", "margin": "md", "wrap": True},
-                        ],
-                    },
-                    {
-                        "type": "box",
-                        "layout": "vertical",
-                        "flex": 2,
-                        "alignItems": "center",
-                        "justifyContent": "center",
-                        "contents": [{"type": "text", "text": "🐶🐱", "size": "xxl", "align": "center"}],
-                    },
+                    {"type": "text", "text": title, "weight": "bold", "size": "lg", "color": "#ffffff", "wrap": True},
+                    {"type": "text", "text": subtitle or "-", "size": "sm", "color": "#fff6e8", "margin": "sm", "wrap": True},
                 ],
             },
             "body": {
                 "type": "box",
                 "layout": "vertical",
                 "spacing": "md",
-                "backgroundColor": "#ffffff",
-                "paddingAll": "18px",
+                "backgroundColor": "#fffaf2",
+                "paddingAll": "16px",
                 "contents": [
                     {
                         "type": "box",
@@ -251,197 +166,113 @@ class WarmPawsLineService(models.AbstractModel):
                         "contents": [
                             {
                                 "type": "box",
-                                "layout": "horizontal",
-                                "spacing": "md",
-                                "backgroundColor": "#eef8f2",
-                                "cornerRadius": "14px",
-                                "paddingAll": "14px",
-                                "flex": 3,
+                                "layout": "vertical",
+                                "backgroundColor": status_tint,
+                                "cornerRadius": "10px",
+                                "paddingAll": "12px",
+                                "flex": 2,
                                 "contents": [
-                                    {"type": "text", "text": "✓", "size": "xxl", "color": status_color, "flex": 1, "gravity": "center"},
+                                    {"type": "text", "text": "目前狀態", "size": "xs", "color": "#6f645c"},
                                     {
-                                        "type": "box",
-                                        "layout": "vertical",
-                                        "flex": 3,
-                                        "contents": [
-                                            {"type": "text", "text": "目前狀態", "size": "sm", "color": "#4b6356"},
-                                            {"type": "text", "text": status, "size": "xl", "weight": "bold", "color": status_color, "wrap": True},
-                                        ],
+                                        "type": "text",
+                                        "text": status,
+                                        "size": "md",
+                                        "weight": "bold",
+                                        "color": status_color,
+                                        "wrap": True,
+                                        "margin": "xs",
                                     },
                                 ],
                             },
                             {
                                 "type": "box",
-                                "layout": "horizontal",
+                                "layout": "vertical",
                                 "backgroundColor": status_color,
-                                "cornerRadius": "14px",
-                                "paddingAll": "14px",
-                                "flex": 2,
+                                "cornerRadius": "10px",
+                                "paddingAll": "12px",
+                                "flex": 1,
                                 "alignItems": "center",
                                 "justifyContent": "center",
-                                "spacing": "sm",
                                 "contents": [
-                                    {"type": "text", "text": "🔔", "size": "lg", "color": "#ffffff", "flex": 0},
-                                    {"type": "text", "text": "通知", "size": "md", "weight": "bold", "color": "#ffffff", "align": "center"},
+                                    {
+                                        "type": "text",
+                                        "text": "通知",
+                                        "size": "sm",
+                                        "weight": "bold",
+                                        "color": "#ffffff",
+                                        "align": "center",
+                                    }
                                 ],
                             },
                         ],
                     },
-                    {"type": "separator", "color": "#dce9df", "margin": "md"},
+                    {"type": "separator", "color": "#eadfd4"},
                     *row_contents,
                 ],
             },
             "footer": {
                 "type": "box",
                 "layout": "vertical",
-                "backgroundColor": "#ffffff",
-                "paddingAll": "18px",
+                "backgroundColor": "#fffaf2",
+                "paddingAll": "16px",
                 "contents": [
                     {
                         "type": "button",
-                        "height": "md",
+                        "height": "sm",
                         "style": "primary",
-                        "color": "#237a55",
+                        "color": footer_color,
                         "action": {"type": "uri", "label": action_label, "uri": self._frontend_url(action_path)},
                     }
                 ],
             },
         }
 
-    def _brown_bubble(self, title, subtitle, status, status_color, image_url, rows, action_label, action_path, reschedule_label):
-        row_contents = []
-        for index, row in enumerate(rows):
-            if index:
-                row_contents.append({"type": "separator", "color": "#eadfd4"})
-            row_contents.append(self._info_row(row[0], row[1], row[2]))
-
-        status_description = (
-            "此預約已取消，若需重新安排，請點擊下方按鈕。"
-            if status == "預約已取消"
-            else "我們已收到您的訪視預約，請準時抵達中途之家。"
+    def _adoption_bubble(self, order, event_name):
+        animal = order.warm_paws_animal_product_id
+        status = self._adoption_stage_label(event_name)
+        action_path = "/profile/records" if event_name == "completed" else "/profile/applications"
+        action_label = "查看我的認養紀錄" if event_name == "completed" else "查看我的認養申請"
+        rows = [
+            ("毛孩", animal.name if animal else "-"),
+            ("品種", animal.animal_breed if animal else "-"),
+            ("申請人", order.partner_id.name or "-"),
+            ("電話", order.warm_paws_applicant_phone or order.partner_id.phone or "-"),
+            ("居住縣市", order.warm_paws_applicant_city or "-"),
+        ]
+        return self._warm_card(
+            "暖心毛孩認養申請提醒",
+            order.name,
+            status,
+            rows,
+            action_label,
+            action_path,
+            "#5f9f78",
+            "#237a55",
+            event_name,
         )
-        body_contents = [
-            {
-                "type": "box",
-                "layout": "horizontal",
-                "spacing": "md",
-                "backgroundColor": "#fff2ef" if status == "預約已取消" else "#eef8f2",
-                "cornerRadius": "14px",
-                "paddingAll": "14px",
-                "contents": [
-                    {"type": "text", "text": "✕" if status == "預約已取消" else "✓", "size": "xl", "color": status_color, "flex": 0},
-                    {
-                        "type": "box",
-                        "layout": "vertical",
-                        "contents": [
-                            {"type": "text", "text": status, "size": "xl", "weight": "bold", "color": status_color},
-                            {"type": "text", "text": status_description, "size": "sm", "color": "#6f645c", "wrap": True, "margin": "sm"},
-                        ],
-                    },
-                ],
-            },
-            {
-                "type": "box",
-                "layout": "vertical",
-                "backgroundColor": "#ffffff",
-                "cornerRadius": "16px",
-                "paddingAll": "14px",
-                "spacing": "sm",
-                "contents": row_contents,
-            },
+
+    def _visit_bubble(self, event, event_name):
+        animal = event.warm_paws_animal_product_id
+        partner = event.partner_ids[:1]
+        animal_name = animal.name if animal else "-"
+        applicant = partner.name if partner else "-"
+        rows = [
+            ("毛孩", animal_name),
+            ("訪視時間", self._plain_datetime(event.start)),
+            ("聯絡電話", event.warm_paws_phone or (partner.phone if partner else "-") or "-"),
+            ("備註", event.warm_paws_note or "-"),
         ]
-
-        if status == "預約已取消":
-            body_contents.append(
-                {
-                    "type": "box",
-                    "layout": "horizontal",
-                    "backgroundColor": "#f7f1e9",
-                    "cornerRadius": "14px",
-                    "paddingAll": "12px",
-                    "spacing": "md",
-                    "contents": [
-                        {"type": "text", "text": "↻", "size": "xl", "color": "#2f8f67", "flex": 0, "gravity": "center"},
-                        {
-                            "type": "box",
-                            "layout": "vertical",
-                            "flex": 2,
-                            "contents": [
-                                {"type": "text", "text": "需要重新安排訪視？", "size": "md", "weight": "bold", "color": "#2f8f67"},
-                                {"type": "text", "text": "點擊按鈕重新選擇訪視時間", "size": "xs", "color": "#6f645c", "wrap": True},
-                            ],
-                        },
-                        {
-                            "type": "button",
-                            "style": "primary",
-                            "height": "sm",
-                            "color": "#2f8f67",
-                            "action": {"type": "uri", "label": reschedule_label, "uri": self._frontend_url("/profile/appointments")},
-                            "flex": 2,
-                        },
-                    ],
-                }
-            )
-
-        header_contents = [
-            {
-                "type": "box",
-                "layout": "vertical",
-                "contents": [
-                    {"type": "text", "text": title, "weight": "bold", "size": "xl", "color": "#ffffff", "wrap": True},
-                    {"type": "text", "text": subtitle or "-", "size": "sm", "color": "#fff1df", "margin": "sm", "wrap": True},
-                ],
-            }
-        ]
-
-        if image_url:
-            header_contents.append(
-                {
-                    "type": "image",
-                    "url": image_url,
-                    "size": "md",
-                    "aspectRatio": "1:1",
-                    "aspectMode": "cover",
-                    "cornerRadius": "999px",
-                    "margin": "lg",
-                }
-            )
-
-        return {
-            "type": "bubble",
-            "size": "mega",
-            "header": {
-                "type": "box",
-                "layout": "horizontal",
-                "backgroundColor": "#7b5439",
-                "paddingAll": "20px",
-                "spacing": "md",
-                "contents": header_contents,
-            },
-            "body": {
-                "type": "box",
-                "layout": "vertical",
-                "backgroundColor": "#fff8ef",
-                "paddingAll": "18px",
-                "spacing": "md",
-                "contents": body_contents,
-            },
-            "footer": {
-                "type": "box",
-                "layout": "vertical",
-                "backgroundColor": "#fff8ef",
-                "paddingAll": "18px",
-                "contents": [
-                    {
-                        "type": "button",
-                        "height": "md",
-                        "style": "secondary",
-                        "color": "#7b5439",
-                        "action": {"type": "uri", "label": action_label, "uri": self._frontend_url(action_path)},
-                    }
-                ],
-            },
-        }
+        return self._warm_card(
+            "暖心毛孩訪視預約提醒",
+            f"認養訪視：{animal_name} - {applicant}",
+            self._visit_stage_label(event_name),
+            rows,
+            "查看預約詳情",
+            "/profile/appointments",
+            "#7b5439",
+            "#7b5439",
+            event_name,
+        )
 
     def notify_adoption(self, order, event_name):
         order = order.sudo()
