@@ -109,6 +109,7 @@ class WarmPawsApi(http.Controller):
         search = kwargs.get("search")
         limit = int(kwargs.get("limit") or 0)
         sort = kwargs.get("sort") or "newest"
+        image_mode = kwargs.get("imageMode") or kwargs.get("image_mode") or "full"
 
         if animal_type in ("dog", "cat"):
             domain.append(("animal_type", "=", animal_type))
@@ -126,7 +127,7 @@ class WarmPawsApi(http.Controller):
             order = "animal_breed asc"
 
         records = request.env["product.template"].sudo().search(domain, order=order, limit=limit)
-        payload = [record.to_warm_paws_frontend_dict() for record in records]
+        payload = [record.to_warm_paws_frontend_dict(image_mode=image_mode) for record in records]
         cache.set_json(key, payload)
         return cors_response(payload, extra_headers=[("X-Warm-Paws-Cache", "MISS")])
 

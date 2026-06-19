@@ -131,8 +131,11 @@ class ProductTemplate(models.Model):
         images.extend([image.to_data_url() for image in self.animal_image_ids if image.image])
         return images
 
-    def to_warm_paws_frontend_dict(self):
+    def to_warm_paws_frontend_dict(self, image_mode="full"):
         self.ensure_one()
+        images = self.get_animal_image_urls()
+        if image_mode == "cover":
+            images = images[:1]
         return {
             "id": self.id,
             "name": self.name,
@@ -165,7 +168,7 @@ class ProductTemplate(models.Model):
             ],
             "suitableHomes": self._split_lines(self.animal_suitable_home),
             "createdAt": fields.Datetime.to_string(self.create_date),
-            "images": self.get_animal_image_urls(),
+            "images": images,
             "productId": self.id,
             "price": self.list_price,
         }
