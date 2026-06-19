@@ -561,6 +561,28 @@ class WarmPawsApi(http.Controller):
         else:
             users = request.env["res.users"].sudo().search([("partner_id", "=", partner.id)], limit=1)
             user = users or user
+            if not user:
+                login = email or partner.email or f"line_{line_user_id}@warm-paws.local"
+                existing_user = request.env["res.users"].sudo().search([("login", "=", login)], limit=1)
+                if existing_user:
+                    user = existing_user
+                    partner = user.partner_id.sudo()
+                else:
+                    user = (
+                        request.env["res.users"]
+                        .sudo()
+                        .with_context(no_reset_password=True)
+                        .create(
+                            {
+                                "name": display_name,
+                                "login": login,
+                                "email": email or partner.email or "",
+                                "password": line_user_id,
+                                "partner_id": partner.id,
+                                "groups_id": [(6, 0, [])],
+                            }
+                        )
+                    )
 
         values = {
             "name": partner.name or display_name,
