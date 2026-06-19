@@ -1,4 +1,4 @@
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class ProductTemplate(models.Model):
@@ -60,6 +60,58 @@ class ProductTemplate(models.Model):
         "product_tmpl_id",
         string="認養頁照片",
     )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        if any(values.get("is_adoptable_animal") for values in vals_list):
+            self.env["warm.paws.cache"].sudo().clear_animals()
+        return records
+
+    def write(self, vals):
+        was_adoptable = any(self.mapped("is_adoptable_animal"))
+        result = super().write(vals)
+        animal_fields = {
+            "is_adoptable_animal",
+            "active",
+            "name",
+            "image_1920",
+            "animal_type",
+            "animal_breed",
+            "animal_age",
+            "animal_age_value",
+            "animal_gender",
+            "animal_weight",
+            "animal_location",
+            "animal_status",
+            "animal_neutered",
+            "animal_chip_status",
+            "animal_personality",
+            "animal_health_status",
+            "animal_rescue_story",
+            "animal_about",
+            "animal_vaccine_info",
+            "animal_deworming_status",
+            "animal_chip_implant_status",
+            "animal_health_record_status",
+            "animal_traits",
+            "animal_rating_human",
+            "animal_rating_active",
+            "animal_rating_train",
+            "animal_rating_cat",
+            "animal_rating_dog",
+            "animal_suitable_home",
+        }
+        if (was_adoptable or any(self.mapped("is_adoptable_animal"))) and animal_fields.intersection(vals):
+            self.env["warm.paws.cache"].sudo().clear_animals()
+        return result
+
+    def unlink(self):
+        should_clear = any(self.mapped("is_adoptable_animal"))
+        result = super().unlink()
+        if should_clear:
+            self.env["warm.paws.cache"].sudo().clear_animals()
+        return result
 
     def _selection_label(self, field_name, value):
         return dict(self._fields[field_name].selection).get(value, value or "")

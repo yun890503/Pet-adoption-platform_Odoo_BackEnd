@@ -1,3 +1,4 @@
+import hashlib
 import json
 from datetime import datetime, timedelta
 
@@ -60,6 +61,12 @@ def parse_int(value):
         return 0
 
 
+def cache_key(prefix, data):
+    raw = json.dumps(data or {}, sort_keys=True, ensure_ascii=False, default=str)
+    digest = hashlib.sha1(raw.encode("utf-8")).hexdigest()
+    return f"warm_paws:animals:{prefix}:{digest}"
+
+
 def sale_order_domain_for_partner(partner):
     return [("is_warm_paws_adoption", "=", True), ("partner_id", "=", partner.id)]
 
@@ -82,6 +89,12 @@ class WarmPawsApi(http.Controller):
 
     @http.route("/warm_paws/api/animals", type="http", auth="public", methods=["GET"], csrf=False)
     def animals(self, **kwargs):
+        cache = request.env["warm.paws.cache"].sudo()
+        key = cache_key("list", kwargs)
+        cached = cache.get_json(key)
+        if cached is not None:
+            return cors_response(cached)
+
         domain = [("active", "=", True), ("is_adoptable_animal", "=", True)]
         animal_type = kwargs.get("type")
         name = kwargs.get("name")
@@ -106,16 +119,26 @@ class WarmPawsApi(http.Controller):
             order = "animal_breed asc"
 
         records = request.env["product.template"].sudo().search(domain, order=order, limit=limit)
-        return cors_response([record.to_warm_paws_frontend_dict() for record in records])
+        payload = [record.to_warm_paws_frontend_dict() for record in records]
+        cache.set_json(key, payload)
+        return cors_response(payload)
 
     @http.route("/warm_paws/api/animals/<int:animal_id>", type="http", auth="public", methods=["GET"], csrf=False)
     def animal_detail(self, animal_id, **kwargs):
+        cache = request.env["warm.paws.cache"].sudo()
+        key = cache_key("detail", {"id": animal_id})
+        cached = cache.get_json(key)
+        if cached is not None:
+            return cors_response(cached)
+
         animal = request.env["product.template"].sudo().browse(animal_id).exists()
         if animal and not animal.is_adoptable_animal:
             animal = False
         if not animal:
             return cors_response({"message": "Animal not found."}, status=404)
-        return cors_response(animal.to_warm_paws_frontend_dict())
+        payload = animal.to_warm_paws_frontend_dict()
+        cache.set_json(key, payload)
+        return cors_response(payload)
 
     @http.route("/warm_paws/api/adoption-inquiries", type="http", auth="public", methods=["POST", "OPTIONS"], csrf=False)
     def adoption_inquiry(self, **kwargs):

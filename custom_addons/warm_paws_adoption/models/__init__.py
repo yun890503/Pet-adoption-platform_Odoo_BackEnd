@@ -1,5 +1,6 @@
 from . import product_template
 from . import product_animal_image
+from . import cache_service
 from . import line_service
 from . import res_partner
 from . import res_config_settings
