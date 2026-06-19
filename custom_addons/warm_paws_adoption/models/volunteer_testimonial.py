@@ -22,4 +22,5 @@ class WarmPawsVolunteerTestimonial(models.Model):
             "rating": max(1, min(5, self.rating or 5)),
             "message": self.message or "",
             "createdAt": fields.Datetime.to_string(self.create_date),
+            "partnerId": self.partner_id.id,
         }

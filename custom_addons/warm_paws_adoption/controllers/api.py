@@ -14,7 +14,7 @@ def cors_response(payload=None, status=200):
         headers=[
             ("Content-Type", "application/json; charset=utf-8"),
             ("Access-Control-Allow-Origin", "*"),
-            ("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, OPTIONS"),
+            ("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS"),
             ("Access-Control-Allow-Headers", "Content-Type, Authorization"),
         ],
         status=status,
@@ -379,6 +379,21 @@ class WarmPawsApi(http.Controller):
             }
         )
         return cors_response(record.to_warm_paws_frontend_dict(), status=201)
+
+    @http.route("/warm_paws/api/volunteer-testimonials/<int:testimonial_id>", type="http", auth="public", methods=["DELETE", "OPTIONS"], csrf=False)
+    def delete_volunteer_testimonial(self, testimonial_id, **kwargs):
+        if is_preflight():
+            return cors_response({"ok": True})
+        partner = current_partner()
+        if not partner:
+            return cors_response({"message": "Unauthorized."}, status=401)
+
+        record = request.env["warm.paws.volunteer.testimonial"].sudo().browse(testimonial_id).exists()
+        if not record or record.partner_id != partner:
+            return cors_response({"message": "Testimonial not found."}, status=404)
+
+        record.unlink()
+        return cors_response({"ok": True})
 
     @http.route("/warm_paws/api/contact-messages", type="http", auth="public", methods=["POST", "OPTIONS"], csrf=False)
     def contact_message(self, **kwargs):
