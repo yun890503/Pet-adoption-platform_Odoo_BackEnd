@@ -2,6 +2,7 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_warm_paws_animal_user,warm.paws.animal user,model_warm_paws_animal,base.group_user,1,1,1,1
 access_warm_paws_adoption_inquiry_user,warm.paws.adoption.inquiry user,model_warm_paws_adoption_inquiry,base.group_user,1,1,1,1
 access_warm_paws_volunteer_application_user,warm.paws.volunteer.application user,model_warm_paws_volunteer_application,base.group_user,1,1,1,1
+access_warm_paws_volunteer_testimonial_user,warm.paws.volunteer.testimonial user,model_warm_paws_volunteer_testimonial,base.group_user,1,1,1,1
 access_warm_paws_contact_message_user,warm.paws.contact.message user,model_warm_paws_contact_message,base.group_user,1,1,1,1
 access_warm_paws_member_user,warm.paws.member user,model_warm_paws_member,base.group_user,1,1,1,1
 access_warm_paws_product_animal_image_user,warm.paws.product.animal.image user,model_warm_paws_product_animal_image,base.group_user,1,1,1,1

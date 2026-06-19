@@ -344,6 +344,42 @@ class WarmPawsApi(http.Controller):
         )
         return cors_response({"id": application.id, "message": "Volunteer application created."}, status=201)
 
+    @http.route("/warm_paws/api/volunteer-testimonials", type="http", auth="public", methods=["GET", "POST", "OPTIONS"], csrf=False)
+    def volunteer_testimonials(self, **kwargs):
+        if is_preflight():
+            return cors_response({"ok": True})
+
+        Testimonial = request.env["warm.paws.volunteer.testimonial"].sudo()
+        if request.httprequest.method == "GET":
+            limit = parse_int(kwargs.get("limit")) or 20
+            records = Testimonial.search([("is_published", "=", True)], order="create_date desc, id desc", limit=limit)
+            return cors_response([record.to_warm_paws_frontend_dict() for record in records])
+
+        partner = current_partner()
+        if not partner:
+            return cors_response({"message": "Unauthorized."}, status=401)
+
+        data = json_body()
+        message = (data.get("message") or "").strip()
+        if not message:
+            return cors_response({"message": "Message is required."}, status=400)
+        if len(message) > 300:
+            message = message[:300]
+
+        rating = parse_int(data.get("rating")) or 5
+        rating = max(1, min(5, rating))
+        record = Testimonial.create(
+            {
+                "partner_id": partner.id,
+                "name": partner.name or data.get("name") or "暖心志工",
+                "role": data.get("role") or "暖心志工",
+                "rating": rating,
+                "message": message,
+                "is_published": True,
+            }
+        )
+        return cors_response(record.to_warm_paws_frontend_dict(), status=201)
+
     @http.route("/warm_paws/api/contact-messages", type="http", auth="public", methods=["POST", "OPTIONS"], csrf=False)
     def contact_message(self, **kwargs):
         if is_preflight():

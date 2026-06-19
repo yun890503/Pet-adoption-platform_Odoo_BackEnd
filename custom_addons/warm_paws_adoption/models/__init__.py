@@ -6,6 +6,7 @@ from . import res_config_settings
 from . import animal
 from . import adoption_inquiry
 from . import volunteer_application
+from . import volunteer_testimonial
 from . import contact_message
 from . import member
 from . import sale_order
