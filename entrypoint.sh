@@ -10,6 +10,7 @@ set -e
 : "${DB_PASSWORD:=odoo}"
 : "${DB_NAME:=Pet-adoption-platform}"
 : "${ODOO_ADMIN_PASSWORD:=admin}"
+: "${ODOO_DATA_DIR:=/var/lib/odoo}"
 : "${ODOO_INIT_MODULES:=base,warm_paws_adoption}"
 : "${ODOO_UPDATE_MODULES:=warm_paws_adoption}"
 : "${ODOO_WORKERS:=2}"
@@ -25,6 +26,8 @@ set -e
 CONFIG_FILE="/tmp/odoo-zeabur.conf"
 cp /app/odoo-zeabur.conf "${CONFIG_FILE}"
 sed -i "s/^admin_passwd = .*/admin_passwd = ${ODOO_ADMIN_PASSWORD}/" "${CONFIG_FILE}"
+sed -i "s|^data_dir = .*|data_dir = ${ODOO_DATA_DIR}|" "${CONFIG_FILE}"
+mkdir -p "${ODOO_DATA_DIR}"
 
 INIT_ARGS=""
 UPDATE_ARGS=""
