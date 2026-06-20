@@ -15,6 +15,8 @@ set -e
 : "${ODOO_UPDATE_MODULES:=warm_paws_adoption}"
 : "${ODOO_WORKERS:=2}"
 : "${ODOO_MAX_CRON_THREADS:=1}"
+: "${ODOO_CLEAN_MISSING_FILESTORE:=1}"
+: "${ODOO_DISABLE_WEBSOCKET:=1}"
 : "${LINE_LIFF_ID:=2010432240-mRjM2C9g}"
 : "${LINE_CHANNEL_ID:=2010432240}"
 : "${LINE_MESSAGING_CHANNEL_ID:=2010436798}"
@@ -73,6 +75,34 @@ ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 SQL
 fi
 
+if [ "${ODOO_CLEAN_MISSING_FILESTORE}" = "1" ] && [ "${DB_INITIALIZED}" = "t" ] && command -v psql >/dev/null 2>&1; then
+  MISSING_IDS_FILE="/tmp/odoo-missing-attachments.txt"
+  : > "${MISSING_IDS_FILE}"
+  psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" -At -F '|' \
+    -c "SELECT id, store_fname FROM ir_attachment WHERE store_fname IS NOT NULL AND store_fname != '';" 2>/dev/null |
+  while IFS='|' read -r ATTACHMENT_ID STORE_FNAME; do
+    if [ -n "${ATTACHMENT_ID}" ] && [ -n "${STORE_FNAME}" ] && [ ! -f "${ODOO_DATA_DIR}/filestore/${DB_NAME}/${STORE_FNAME}" ]; then
+      printf '%s\n' "${ATTACHMENT_ID}" >> "${MISSING_IDS_FILE}"
+    fi
+  done
+  if [ -s "${MISSING_IDS_FILE}" ]; then
+    MISSING_IDS="$(paste -sd, "${MISSING_IDS_FILE}")"
+    echo "Removing missing filestore attachment records: ${MISSING_IDS}"
+    psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" >/dev/null 2>&1 <<SQL || true
+DELETE FROM ir_attachment WHERE id IN (${MISSING_IDS});
+SQL
+  fi
+fi
+
+ODOO_REALTIME_UPSTREAM="odoo_gevent"
+if [ "${ODOO_WORKERS}" = "0" ]; then
+  ODOO_REALTIME_UPSTREAM="odoo"
+fi
+ODOO_REALTIME_DIRECTIVE="proxy_pass http://${ODOO_REALTIME_UPSTREAM};"
+if [ "${ODOO_DISABLE_WEBSOCKET}" = "1" ]; then
+  ODOO_REALTIME_DIRECTIVE="return 204;"
+fi
+
 cat > /tmp/nginx.conf <<EOF
 worker_processes auto;
 pid /tmp/nginx.pid;
@@ -102,7 +132,7 @@ http {
     listen ${PORT};
 
     location /websocket {
-      proxy_pass http://odoo_gevent;
+      ${ODOO_REALTIME_DIRECTIVE}
       proxy_http_version 1.1;
       proxy_set_header Upgrade \$http_upgrade;
       proxy_set_header Connection "upgrade";
@@ -113,7 +143,7 @@ http {
     }
 
     location /longpolling {
-      proxy_pass http://odoo_gevent;
+      ${ODOO_REALTIME_DIRECTIVE}
       proxy_http_version 1.1;
       proxy_set_header Upgrade \$http_upgrade;
       proxy_set_header Connection "upgrade";
@@ -151,5 +181,38 @@ python /app/odoo-bin \
 
 ODOO_PID="$!"
 trap 'kill "${ODOO_PID}" 2>/dev/null || true' INT TERM
+
+wait_for_port() {
+  HOST="$1"
+  PORT_TO_CHECK="$2"
+  LABEL="$3"
+  for attempt in $(seq 1 60); do
+    if python - "$HOST" "$PORT_TO_CHECK" <<'PY' >/dev/null 2>&1
+import socket
+import sys
+
+host, port = sys.argv[1], int(sys.argv[2])
+with socket.create_connection((host, port), timeout=1):
+    pass
+PY
+    then
+      echo "${LABEL} is ready on ${HOST}:${PORT_TO_CHECK}"
+      return 0
+    fi
+    if ! kill -0 "${ODOO_PID}" 2>/dev/null; then
+      echo "Odoo exited before ${LABEL} became ready"
+      wait "${ODOO_PID}"
+      exit 1
+    fi
+    sleep 1
+  done
+  echo "${LABEL} did not become ready on ${HOST}:${PORT_TO_CHECK}; starting nginx anyway"
+  return 0
+}
+
+wait_for_port 127.0.0.1 "${ODOO_HTTP_PORT}" "Odoo HTTP"
+if [ "${ODOO_WORKERS}" != "0" ] && [ "${ODOO_DISABLE_WEBSOCKET}" != "1" ]; then
+  wait_for_port 127.0.0.1 "${ODOO_GEVENT_PORT}" "Odoo gevent"
+fi
 
 exec nginx -c /tmp/nginx.conf -g 'daemon off;'
