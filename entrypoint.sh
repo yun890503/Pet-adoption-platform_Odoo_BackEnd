@@ -2,6 +2,8 @@
 set -e
 
 : "${PORT:=8080}"
+: "${ODOO_HTTP_PORT:=8069}"
+: "${ODOO_GEVENT_PORT:=8072}"
 : "${DB_HOST:=localhost}"
 : "${DB_PORT:=5432}"
 : "${DB_USER:=odoo}"
@@ -10,7 +12,7 @@ set -e
 : "${ODOO_ADMIN_PASSWORD:=admin}"
 : "${ODOO_INIT_MODULES:=base,warm_paws_adoption}"
 : "${ODOO_UPDATE_MODULES:=warm_paws_adoption}"
-: "${ODOO_WORKERS:=4}"
+: "${ODOO_WORKERS:=8}"
 : "${ODOO_MAX_CRON_THREADS:=1}"
 : "${LINE_LIFF_ID:=2010432240-mRjM2C9g}"
 : "${LINE_CHANNEL_ID:=2010432240}"
@@ -54,9 +56,71 @@ ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 SQL
 fi
 
-exec python /app/odoo-bin \
+cat > /tmp/nginx.conf <<EOF
+worker_processes auto;
+pid /tmp/nginx.pid;
+
+events {
+  worker_connections 1024;
+}
+
+http {
+  include /etc/nginx/mime.types;
+  default_type application/octet-stream;
+  client_max_body_size 200m;
+  proxy_read_timeout 720s;
+  proxy_connect_timeout 720s;
+  proxy_send_timeout 720s;
+  proxy_buffering off;
+
+  upstream odoo {
+    server 127.0.0.1:${ODOO_HTTP_PORT};
+  }
+
+  upstream odoo_gevent {
+    server 127.0.0.1:${ODOO_GEVENT_PORT};
+  }
+
+  server {
+    listen ${PORT};
+
+    location /websocket {
+      proxy_pass http://odoo_gevent;
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade \$http_upgrade;
+      proxy_set_header Connection "upgrade";
+      proxy_set_header Host \$host;
+      proxy_set_header X-Real-IP \$remote_addr;
+      proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
+    location /longpolling {
+      proxy_pass http://odoo_gevent;
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade \$http_upgrade;
+      proxy_set_header Connection "upgrade";
+      proxy_set_header Host \$host;
+      proxy_set_header X-Real-IP \$remote_addr;
+      proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
+    location / {
+      proxy_pass http://odoo;
+      proxy_set_header Host \$host;
+      proxy_set_header X-Real-IP \$remote_addr;
+      proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+  }
+}
+EOF
+
+python /app/odoo-bin \
   -c "${CONFIG_FILE}" \
-  --http-port="${PORT}" \
+  --http-port="${ODOO_HTTP_PORT}" \
+  --gevent-port="${ODOO_GEVENT_PORT}" \
   --db_host="${DB_HOST}" \
   --db_port="${DB_PORT}" \
   --db_user="${DB_USER}" \
@@ -66,4 +130,9 @@ exec python /app/odoo-bin \
   -d "${DB_NAME}" \
   ${INIT_ARGS} \
   ${UPDATE_ARGS} \
-  --without-demo=all
+  --without-demo=all &
+
+ODOO_PID="$!"
+trap 'kill "${ODOO_PID}" 2>/dev/null || true' INT TERM
+
+exec nginx -c /tmp/nginx.conf -g 'daemon off;'
