@@ -1,5 +1,7 @@
 import hashlib
 import json
+import base64
+import binascii
 from datetime import datetime, timedelta
 
 import odoo
@@ -67,7 +69,19 @@ def parse_int(value):
 def cache_key(prefix, data):
     raw = json.dumps(data or {}, sort_keys=True, ensure_ascii=False, default=str)
     digest = hashlib.sha1(raw.encode("utf-8")).hexdigest()
-    return f"warm_paws:animals:v4:{prefix}:{digest}"
+    return f"warm_paws:animals:v5:{prefix}:{digest}"
+
+
+def image_content_type(raw):
+    if raw.startswith(b"\xff\xd8"):
+        return "image/jpeg"
+    if raw.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if raw.startswith(b"GIF87a") or raw.startswith(b"GIF89a"):
+        return "image/gif"
+    if raw.startswith(b"RIFF") and raw[8:12] == b"WEBP":
+        return "image/webp"
+    return "application/octet-stream"
 
 
 def sale_order_domain_for_partner(partner):
@@ -93,6 +107,49 @@ class WarmPawsApi(http.Controller):
     @http.route("/warm_paws/api/<path:any_path>", type="http", auth="public", methods=["OPTIONS"], csrf=False)
     def options(self, any_path=None, **kwargs):
         return cors_response({"ok": True})
+
+    @http.route(
+        "/warm_paws/api/images/<string:model_key>/<int:record_id>/<string:field_name>",
+        type="http",
+        auth="public",
+        methods=["GET"],
+        csrf=False,
+    )
+    def image(self, model_key, record_id, field_name, **kwargs):
+        allowed = {
+            "product-template": ("product.template", {"image_1920", "image_1024", "image_512", "image_256", "image_128"}),
+            "animal-image": ("warm.paws.product.animal.image", {"image"}),
+        }
+        model_config = allowed.get(model_key)
+        if not model_config or field_name not in model_config[1]:
+            return request.make_response("", status=404)
+
+        model_name = model_config[0]
+        record = request.env[model_name].sudo().browse(record_id).exists()
+        if not record:
+            return request.make_response("", status=404)
+
+        if model_name == "product.template" and not record.is_adoptable_animal:
+            return request.make_response("", status=404)
+
+        try:
+            encoded = record[field_name]
+            if not encoded:
+                return request.make_response("", status=404)
+            if isinstance(encoded, str):
+                encoded = encoded.encode("ascii")
+            raw = base64.b64decode(encoded)
+        except (FileNotFoundError, TypeError, ValueError, binascii.Error):
+            return request.make_response("", status=404)
+
+        return request.make_response(
+            raw,
+            headers=[
+                ("Content-Type", image_content_type(raw)),
+                ("Cache-Control", "public, max-age=86400"),
+                ("Access-Control-Allow-Origin", "*"),
+            ],
+        )
 
     @http.route("/warm_paws/api/animals", type="http", auth="public", methods=["GET"], csrf=False)
     def animals(self, **kwargs):

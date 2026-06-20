@@ -132,17 +132,17 @@ class ProductTemplate(models.Model):
         ).rstrip("/")
         return base_url
 
-    def _warm_paws_image_url(self, model_name, record_id, field_name="image_1920"):
-        path = f"/web/image/{model_name}/{record_id}/{field_name}"
+    def _warm_paws_image_url(self, model_key, record_id, field_name="image_1920"):
+        path = f"/warm_paws/api/images/{model_key}/{record_id}/{field_name}"
         return f"{self._warm_paws_backend_base_url()}{path}"
 
     def get_animal_image_urls(self, image_mode="full"):
         self.ensure_one()
         images = []
         if self.image_1920:
-            images.append(self._warm_paws_image_url("product.template", self.id, "image_1024"))
+            images.append(self._warm_paws_image_url("product-template", self.id, "image_1024"))
         images.extend(
-            self._warm_paws_image_url("warm.paws.product.animal.image", image.id, "image")
+            self._warm_paws_image_url("animal-image", image.id, "image")
             for image in self.animal_image_ids
             if image.image
         )
@@ -153,7 +153,7 @@ class ProductTemplate(models.Model):
         images = self.get_animal_image_urls(image_mode="cover")
         if images:
             return images[0]
-        return self._warm_paws_image_url("product.template", self.id, "image_512")
+        return self._warm_paws_image_url("product-template", self.id, "image_512")
 
     def to_warm_paws_frontend_dict(self, image_mode="full"):
         self.ensure_one()
