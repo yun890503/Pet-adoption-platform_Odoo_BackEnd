@@ -12,7 +12,7 @@ set -e
 : "${ODOO_ADMIN_PASSWORD:=admin}"
 : "${ODOO_INIT_MODULES:=base,warm_paws_adoption}"
 : "${ODOO_UPDATE_MODULES:=warm_paws_adoption}"
-: "${ODOO_WORKERS:=8}"
+: "${ODOO_WORKERS:=2}"
 : "${ODOO_MAX_CRON_THREADS:=1}"
 : "${LINE_LIFF_ID:=2010432240-mRjM2C9g}"
 : "${LINE_CHANNEL_ID:=2010432240}"
