@@ -139,9 +139,8 @@ class ProductTemplate(models.Model):
     def get_animal_image_urls(self, image_mode="full"):
         self.ensure_one()
         images = []
-        product_image_field = "image_512" if image_mode == "cover" else "image_1024"
         if self.image_1920:
-            images.append(self._warm_paws_image_url("product.template", self.id, product_image_field))
+            images.append(self._warm_paws_image_url("product.template", self.id, "image_1024"))
         images.extend(
             self._warm_paws_image_url("warm.paws.product.animal.image", image.id, "image")
             for image in self.animal_image_ids
