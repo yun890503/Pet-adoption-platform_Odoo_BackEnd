@@ -67,7 +67,7 @@ def parse_int(value):
 def cache_key(prefix, data):
     raw = json.dumps(data or {}, sort_keys=True, ensure_ascii=False, default=str)
     digest = hashlib.sha1(raw.encode("utf-8")).hexdigest()
-    return f"warm_paws:animals:{prefix}:{digest}"
+    return f"warm_paws:animals:v3:{prefix}:{digest}"
 
 
 def sale_order_domain_for_partner(partner):

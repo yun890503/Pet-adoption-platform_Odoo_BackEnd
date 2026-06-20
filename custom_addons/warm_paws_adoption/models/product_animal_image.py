@@ -39,4 +39,4 @@ class WarmPawsProductAnimalImage(models.Model):
         self.ensure_one()
         if not self.image or not base_url:
             return ""
-        return f"{base_url.rstrip('/')}/web/image/warm.paws.product.animal.image/{self.id}/image/{size}x{size}"
+        return f"{base_url.rstrip('/')}/web/image/warm.paws.product.animal.image/{self.id}/image"
