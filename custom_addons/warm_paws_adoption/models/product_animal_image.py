@@ -35,8 +35,8 @@ class WarmPawsProductAnimalImage(models.Model):
         self.env["warm.paws.cache"].sudo().clear_animals()
         return result
 
-    def to_data_url(self):
+    def to_image_url(self, base_url="", size=1024):
         self.ensure_one()
-        if not self.image:
+        if not self.image or not base_url:
             return ""
-        return f"data:{self.mimetype or 'image/png'};base64,{self.image.decode() if isinstance(self.image, bytes) else self.image}"
+        return f"{base_url.rstrip('/')}/web/image/warm.paws.product.animal.image/{self.id}/image/{size}x{size}"

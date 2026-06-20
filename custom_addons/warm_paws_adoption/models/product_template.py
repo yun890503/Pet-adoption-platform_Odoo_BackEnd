@@ -124,30 +124,46 @@ class ProductTemplate(models.Model):
     def _split_traits(self):
         return [item.strip() for item in (self.animal_traits or "").split(",") if item.strip()]
 
-    def get_animal_image_urls(self):
-        self.ensure_one()
-        images = []
-        if self.image_1920:
-            value = self.image_1920.decode() if isinstance(self.image_1920, bytes) else self.image_1920
-            images.append(f"data:image/png;base64,{value}")
-        images.extend([image.to_data_url() for image in self.animal_image_ids if image.image])
-        return images
-
-    def get_animal_cover_image_url(self):
-        self.ensure_one()
+    def _warm_paws_backend_base_url(self):
         base_url = (
             os.environ.get("BACKEND_URL")
             or self.env["ir.config_parameter"].sudo().get_param("warm_paws.backend_url")
             or self.env["ir.config_parameter"].sudo().get_param("web.base.url", "")
         ).rstrip("/")
-        return f"{base_url}/web/image/product.template/{self.id}/image_512"
+        return base_url
+
+    def _warm_paws_image_url(self, model_name, record_id, field_name="image_1920", size=None):
+        path = f"/web/image/{model_name}/{record_id}/{field_name}"
+        if size:
+            path = f"{path}/{size}x{size}"
+        return f"{self._warm_paws_backend_base_url()}{path}"
+
+    def get_animal_image_urls(self, image_mode="full"):
+        self.ensure_one()
+        images = []
+        size = 512 if image_mode == "cover" else 1024
+        if self.image_1920:
+            images.append(self._warm_paws_image_url("product.template", self.id, "image_1920", size))
+        images.extend(
+            self._warm_paws_image_url("warm.paws.product.animal.image", image.id, "image", size)
+            for image in self.animal_image_ids
+            if image.image
+        )
+        return images
+
+    def get_animal_cover_image_url(self):
+        self.ensure_one()
+        images = self.get_animal_image_urls(image_mode="cover")
+        if images:
+            return images[0]
+        return self._warm_paws_image_url("product.template", self.id, "image_512")
 
     def to_warm_paws_frontend_dict(self, image_mode="full"):
         self.ensure_one()
         if image_mode == "cover":
             images = [self.get_animal_cover_image_url()]
         else:
-            images = self.get_animal_image_urls()
+            images = self.get_animal_image_urls(image_mode=image_mode)
         return {
             "id": self.id,
             "name": self.name,
