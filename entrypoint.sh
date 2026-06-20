@@ -20,6 +20,7 @@ set -e
 : "${LINE_CHANNEL_SECRET:=be9e79d6c28536c84ba61475934b92af}"
 : "${LINE_CHANNEL_ACCESS_TOKEN:=}"
 : "${FRONTEND_URL:=https://adoption-platform.zeabur.app}"
+: "${BACKEND_URL:=https://heartwarming.zeabur.app}"
 
 CONFIG_FILE="/tmp/odoo-zeabur.conf"
 cp /app/odoo-zeabur.conf "${CONFIG_FILE}"
@@ -52,6 +53,19 @@ ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 INSERT INTO ir_config_parameter (key, value) VALUES ('warm_paws.line_channel_access_token', '${LINE_CHANNEL_ACCESS_TOKEN}')
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 INSERT INTO ir_config_parameter (key, value) VALUES ('warm_paws.frontend_url', '${FRONTEND_URL}')
+ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO ir_config_parameter (key, value) VALUES ('warm_paws.backend_url', '${BACKEND_URL}')
+ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO ir_config_parameter (key, value) VALUES ('web.base.url', '${BACKEND_URL}')
+ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+SQL
+fi
+
+if command -v psql >/dev/null 2>&1; then
+  psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" >/dev/null 2>&1 <<SQL || true
+INSERT INTO ir_config_parameter (key, value) VALUES ('warm_paws.backend_url', '${BACKEND_URL}')
+ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+INSERT INTO ir_config_parameter (key, value) VALUES ('web.base.url', '${BACKEND_URL}')
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 SQL
 fi

@@ -25,14 +25,14 @@ class WarmPawsCacheService(models.AbstractModel):
         try:
             redis_url = os.environ.get("REDIS_URL")
             if redis_url:
-                return redis.Redis.from_url(redis_url, socket_timeout=2, socket_connect_timeout=2, decode_responses=True)
+                return redis.Redis.from_url(redis_url, socket_timeout=0.5, socket_connect_timeout=0.5, decode_responses=True)
             return redis.Redis(
                 host=os.environ.get("REDIS_HOST", "localhost"),
                 port=int(os.environ.get("REDIS_PORT", "6379")),
                 password=os.environ.get("REDIS_PASSWORD") or None,
                 db=int(os.environ.get("REDIS_DB", "0")),
-                socket_timeout=2,
-                socket_connect_timeout=2,
+                socket_timeout=0.5,
+                socket_connect_timeout=0.5,
                 decode_responses=True,
             )
         except Exception as error:

@@ -1,3 +1,5 @@
+import os
+
 from odoo import api, fields, models
 
 
@@ -131,11 +133,21 @@ class ProductTemplate(models.Model):
         images.extend([image.to_data_url() for image in self.animal_image_ids if image.image])
         return images
 
+    def get_animal_cover_image_url(self):
+        self.ensure_one()
+        base_url = (
+            os.environ.get("BACKEND_URL")
+            or self.env["ir.config_parameter"].sudo().get_param("warm_paws.backend_url")
+            or self.env["ir.config_parameter"].sudo().get_param("web.base.url", "")
+        ).rstrip("/")
+        return f"{base_url}/web/image/product.template/{self.id}/image_512"
+
     def to_warm_paws_frontend_dict(self, image_mode="full"):
         self.ensure_one()
-        images = self.get_animal_image_urls()
         if image_mode == "cover":
-            images = images[:1]
+            images = [self.get_animal_cover_image_url()]
+        else:
+            images = self.get_animal_image_urls()
         return {
             "id": self.id,
             "name": self.name,
